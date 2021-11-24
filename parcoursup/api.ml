@@ -28,20 +28,11 @@ let nouvelle_session () = {
   formations=[];
   }
 
-let ajoute_candidat session ~nom_candidat =
-  match nom_candidat with
-  | None -> begin 
-    session.candidats <- {nom=string_of_int (List.length session.candidats);voeux=[]} :: session.candidats;
-    end
-  | Some s -> begin session.candidats <- {nom=s;voeux=[]} :: session.candidats end;;
-
+let ajoute_candidat session ~nom_candidat = session.candidats <- {nom=nom_candidat;voeux=[]} :: session.candidats
 let ajoute_formation session ~nom_formation ~capacite =
-  match nom_formation, capacite with
-  | Some nom_f, Some cap_f ->
-    session.formations <- {nom=nom_f;capacite=cap_f;voeux=[]} :: session.formations
-  | _ -> invalid_arg "Paramètres de formation manquants";;
+    session.formations <- {nom=nom_formation;capacite=capacite;voeux=[]} :: session.formations
   
-  
+
 let ajoute_voeu session ~rang_repondeur ~nom_candidat ~nom_formation = 
   ignore session;
   ignore rang_repondeur;
