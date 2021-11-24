@@ -3,6 +3,8 @@
 ├─┘├─┤├┬┘│  │ ││ │├┬┘└─┐│ │├─┘
 ┴  ┴ ┴┴└─└─┘└─┘└─┘┴└─└─┘└─┘┴   
  *)
+open Unix;;
+open Hashtbl;;
 type etat = | EnCours | Close
 type formation = {
   nom: string;
@@ -15,14 +17,14 @@ type etudiant = {
 }
 
 type session = {
-  id_session: string;
+  (* id_session: string; *)
   mutable etat: etat;
   mutable candidats: etudiant list;
   mutable formations: formation list;
 }
 
 let nouvelle_session () = {
-  id_session=string_of_float (Unix.time ());
+  (* id_session=string_of_float (Unix.time ()); *)
   etat=EnCours;
   candidats=[];
   formations=[];
@@ -34,7 +36,12 @@ let ajoute_formation session ~nom_formation ~capacite =
   
 
 let ajoute_voeu session ~rang_repondeur ~nom_candidat ~nom_formation = 
-  ignore session;
+  let liste_candidats = session.candidats in
+  let rang = ref (Float.to_int infinity) in
+  match rang_repondeur with | Some n -> rang := n; | _ -> ();
+  let voeu = (rang,nom_formation) in
+
+
   ignore rang_repondeur;
   ignore nom_candidat;
   ignore nom_formation;
