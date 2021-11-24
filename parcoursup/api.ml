@@ -41,7 +41,7 @@ let ajoute_formation session ~nom_formation ~capacite =
     session.formations <- {nom=nom_f;capacite=cap_f;voeux=[]} :: session.formations
   | _ -> invalid_arg "Paramètres de formation manquants";;
   
-
+  
 let ajoute_voeu session ~rang_repondeur ~nom_candidat ~nom_formation = 
   ignore session;
   ignore rang_repondeur;
