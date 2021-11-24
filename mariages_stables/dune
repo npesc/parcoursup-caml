@@ -1,0 +1,7 @@
+(library
+ (name mariages_stables)
+ (modules definitions gale_shapley knuth algo_abstrait)
+)
+(env
+  (dev
+    (flags (:standard -warn-error -A))))

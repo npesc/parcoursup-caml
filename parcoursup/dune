@@ -1,0 +1,4 @@
+(library
+ (name parcoursup)
+ (modules api)
+)
