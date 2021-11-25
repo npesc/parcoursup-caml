@@ -6,46 +6,48 @@
 open Unix;;
 open Hashtbl;;
 type etat = | EnCours | Close
+
 type formation = {
   nom: string;
   mutable capacite: int;
   mutable voeux: string list;
 }
+
 type etudiant = {
   nom: string;
-  mutable voeux: (int option * string) list; (* (rang_repondeur * nom_formation) list *) 
+  mutable voeux: (string, int option) Hashtbl.t; (* (nom_formation * rang_repondeur) list *) 
 }
 
+
 type session = {
-  (* id_session: string; *)
   mutable etat: etat;
-  mutable candidats: etudiant list;
+  candidats: (string, (string, int option) Hashtbl.t) Hashtbl.t;
+  (* (nom_candidat, (nom_formation, Some rang) Hashtable) Hashtable*)
   mutable formations: formation list;
 }
 
 let nouvelle_session () = {
-  (* id_session=string_of_float (Unix.time ()); *)
   etat=EnCours;
-  candidats=[];
+  candidats=Hashtbl.create 1000;
   formations=[];
   }
 
-let ajoute_candidat session ~nom_candidat = session.candidats <- {nom=nom_candidat;voeux=[]} :: session.candidats
+let ajoute_candidat session ~nom_candidat = 
+  let voeu_hashtbl = Hashtbl.create 30 in 
+  Hashtbl.add session.candidats nom_candidat voeu_hashtbl
+;;
+
 let ajoute_formation session ~nom_formation ~capacite =
     session.formations <- {nom=nom_formation;capacite=capacite;voeux=[]} :: session.formations
   
 
 let ajoute_voeu session ~rang_repondeur ~nom_candidat ~nom_formation = 
-  let liste_candidats = session.candidats in
   let rang = ref (Float.to_int infinity) in
   match rang_repondeur with | Some n -> rang := n; | _ -> ();
-  let voeu = (rang,nom_formation) in
-
-
-  ignore rang_repondeur;
-  ignore nom_candidat;
-  ignore nom_formation;
-  failwith "non implémenté"
+  
+  if (Hashtbl.mem session.candidats nom_candidat) then (* si candidat est présent dans hashtable de la session *)
+    Hashtbl.replace (Hashtbl.find session.candidats nom_candidat) nom_formation (Some !rang)
+  else invalid_arg "Erreur ajout voeu candidat";;
 
 let ajoute_commission session ~nom_formation ~fonction_comparaison = 
   ignore session;
