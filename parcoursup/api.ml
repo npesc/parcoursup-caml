@@ -10,12 +10,11 @@ type etat = | EnCours | Close
 type formation = {
   nom: string;
   mutable capacite: int;
-  mutable voeux: string list;
 }
 
 type etudiant = {
   nom: string;
-  mutable voeux: (string, int option) Hashtbl.t; (* (nom_formation * rang_repondeur) list *) 
+  voeux: (string, int option) Hashtbl.t; (* (nom_formation * rang_repondeur) list *) 
 }
 
 
@@ -23,13 +22,14 @@ type session = {
   mutable etat: etat;
   candidats: (string, (string, int option) Hashtbl.t) Hashtbl.t;
   (* (nom_candidat, (nom_formation, Some rang) Hashtable) Hashtable*)
-  mutable formations: formation list;
+  formations: (formation , string array) Hashtbl.t;
+  (* (formation, commission) Hashtable *)
 }
 
 let nouvelle_session () = {
   etat=EnCours;
   candidats=Hashtbl.create 1000;
-  formations=[];
+  formations= Hashtbl.create 100;
   }
 
 let ajoute_candidat session ~nom_candidat = 
@@ -38,22 +38,27 @@ let ajoute_candidat session ~nom_candidat =
 ;;
 
 let ajoute_formation session ~nom_formation ~capacite =
-    session.formations <- {nom=nom_formation;capacite=capacite;voeux=[]} :: session.formations
+  Hashtbl.add session.formations {nom=nom_formation;capacite=capacite;} [||];;
   
 
 let ajoute_voeu session ~rang_repondeur ~nom_candidat ~nom_formation = 
   let rang = ref (Float.to_int infinity) in
-  match rang_repondeur with | Some n -> rang := n; | _ -> ();
-  
+  begin match rang_repondeur with 
+    | Some n -> rang := n;
+    | _ -> (); end;
   if (Hashtbl.mem session.candidats nom_candidat) then (* si candidat est présent dans hashtable de la session *)
     Hashtbl.replace (Hashtbl.find session.candidats nom_candidat) nom_formation (Some !rang)
-  else invalid_arg "Erreur ajout voeu candidat";;
+  else invalid_arg "Erreur ajout voeu, candidat introuvable";;
 
 let ajoute_commission session ~nom_formation ~fonction_comparaison = 
-  ignore session;
-  ignore nom_formation;
-  ignore fonction_comparaison;
-  failwith "non implémenté"
+  let table_candidats = session.candidats in
+  let pretendants =  ref (Array.make (Hashtbl.length table_candidats) "") in
+  Hashtbl.iter (fun nom_c voeux ->
+    if Hashtbl.mem voeux nom_formation 
+    then pretendants := Array.append !pretendants [|nom_c|];)
+    table_candidats;
+  (Array.sort fonction_comparaison !pretendants);;
+
 
 let reunit_commissions session =
   ignore session;
