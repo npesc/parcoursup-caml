@@ -3,70 +3,78 @@
 ├─┘├─┤├┬┘│  │ ││ │├┬┘└─┐│ │├─┘
 ┴  ┴ ┴┴└─└─┘└─┘└─┘┴└─└─┘└─┘┴   
  *)
-open Unix;;
 open Hashtbl;;
-type etat = | EnCours | Close
-
-type formation = {
-  nom: string;
-  mutable capacite: int;
-}
-
-type etudiant = {
-  nom: string;
-  voeux: (string, int option) Hashtbl.t; (* (nom_formation * rang_repondeur) list *) 
-}
+type etat = | Config | Appel | Close
 
 
 type session = {
   mutable etat: etat;
   candidats: (string, (string, int option) Hashtbl.t) Hashtbl.t;
-  (* (nom_candidat, (nom_formation, Some rang) Hashtable) Hashtable*)
-  formations: (formation , string array) Hashtbl.t;
-  (* (formation, commission) Hashtable *)
+  (* (nom_candidat, (nom_formation, Some rang) Hashtable) Hashtable *)
+  formations: (string , int) Hashtbl.t;
+  (* (formation, capacite) Hashtable *)
+  commissions : (string, string list) Hashtbl.t; 
+  (* (formation, liste d'appel) Hashtbl.t *)
+  propositions: (string, string list) Hashtbl.t; 
 }
 
 let nouvelle_session () = {
-  etat=EnCours;
-  candidats=Hashtbl.create 1000;
-  formations= Hashtbl.create 100;
+  etat=Config;
+  candidats=Hashtbl.create 1000 ~random:false;
+  formations=Hashtbl.create 100 ~random:false;
+  commissions=Hashtbl.create 10 ~random:false;
+  propositions=Hashtbl.create 100 ~random:false;
   }
 
 let ajoute_candidat session ~nom_candidat = 
-  let voeu_hashtbl = Hashtbl.create 30 in 
+  let voeu_hashtbl = Hashtbl.create 30 ~random:false in 
   Hashtbl.add session.candidats nom_candidat voeu_hashtbl
 ;;
 
 let ajoute_formation session ~nom_formation ~capacite =
-  Hashtbl.add session.formations {nom=nom_formation;capacite=capacite;} [||];;
+  Hashtbl.add session.formations nom_formation capacite;;
   
 
 let ajoute_voeu session ~rang_repondeur ~nom_candidat ~nom_formation = 
   let rang = ref (Float.to_int infinity) in
   begin match rang_repondeur with 
     | Some n -> rang := n;
-    | _ -> (); end;
-  if (Hashtbl.mem session.candidats nom_candidat) then (* si candidat est présent dans hashtable de la session *)
-    Hashtbl.replace (Hashtbl.find session.candidats nom_candidat) nom_formation (Some !rang)
-  else invalid_arg "Erreur ajout voeu, candidat introuvable";;
+    | _ -> () end;
+  Hashtbl.replace (Hashtbl.find session.candidats nom_candidat) nom_formation (Some !rang)
 
 let ajoute_commission session ~nom_formation ~fonction_comparaison = 
   let table_candidats = session.candidats in
-  let pretendants =  ref (Array.make (Hashtbl.length table_candidats) "") in
-  Hashtbl.iter (fun nom_c voeux ->
+  let pretendants =  ref [] in
+
+  Hashtbl.iter (fun nom_c voeux -> (* voeux -> hashtable de voeux du candidat *)
     if Hashtbl.mem voeux nom_formation 
-    then pretendants := Array.append !pretendants [|nom_c|];)
+    then pretendants :=  nom_c :: !pretendants)
     table_candidats;
-  (Array.sort fonction_comparaison !pretendants);;
+  (* on récupère tous les candidats qui souhaitent intégrer nom_formation 
+  et on les ajoute à la liste pretendants *)
+  ignore(fonction_comparaison);
+  pretendants := List.sort compare !pretendants;
+  (* on tri avec notre fonction de comparaison éventuellement compare dans ce cas*)
+  Hashtbl.add session.commissions nom_formation !pretendants;; 
+  (* on ajoute la liste triée aux commissions *)
 
 
 let reunit_commissions session =
-  ignore session;
-  failwith "non implémenté"
+  session.etat <- Appel;;
 
 let nouveau_jour session =
-  ignore session;
-  failwith "non implémenté"
+  (* si nombre propositions >= capacite, ne rien proposer, sinon proposer capacité-nb propositions*)
+    Hashtbl.iter (fun formation liste_appel -> begin
+    while ((Hashtbl.find session.formations formation > 0) && (liste_appel <> [])) do begin
+    match liste_appel with
+    | x::t -> begin
+      let prop_temp = (Hashtbl.find session.propositions formation) in
+      (Hashtbl.replace session.propositions formation (x :: prop_temp));
+      let capacite_temp = Hashtbl.find session.formations formation in
+      (Hashtbl.replace session.commissions formation t); (* on met à jour la liste d'appel *)
+      (Hashtbl.replace session.formations formation (capacite_temp-1)); end (* on met à jour la capacité *)
+    |_ -> () end done end) session.commissions;;
+
 
 let renonce session ~nom_candidat ~nom_formation = 
   ignore session;
