@@ -15,7 +15,7 @@ type session = {
   (* (formation, capacite) Hashtable *)
   commissions : (string, string list) Hashtbl.t; 
   (* (formation, liste d'appel) Hashtbl.t *)
-  propositions: (string, string list) Hashtbl.t; 
+  propositions: (string, string) Hashtbl.t; 
 }
 
 let nouvelle_session () = {
@@ -61,22 +61,50 @@ let ajoute_commission session ~nom_formation ~fonction_comparaison =
 
 let reunit_commissions session =
   session.etat <- Appel;;
-
+let get_option = function
+| Some x -> x
+| None -> raise (Invalid_argument "Option.get");;
 let nouveau_jour session =
-  (* si nombre propositions >= capacite, ne rien proposer, sinon proposer capacité-nb propositions*)
-    Hashtbl.iter (fun formation liste_appel -> begin
-    while ((Hashtbl.find session.formations formation > 0) && (liste_appel <> [])) do begin
-    match liste_appel with
-    | x::t -> begin
-      let prop_temp = (Hashtbl.find session.propositions formation) in
-      (Hashtbl.replace session.propositions formation (x :: prop_temp));
-      let capacite_temp = Hashtbl.find session.formations formation in
-      (Hashtbl.replace session.commissions formation t); (* on met à jour la liste d'appel *)
-      (Hashtbl.replace session.formations formation (capacite_temp-1)); end (* on met à jour la capacité *)
-    |_ -> () end done end) session.commissions;;
+(* si nombre propositions >= capacite, ne rien proposer, sinon proposer capacité-nb propositions*)
+  Hashtbl.iter (fun formation liste_appel -> begin
+  while ((Hashtbl.find session.formations formation > 0) && (liste_appel <> [])) do begin
+     (* capacite > 0 et liste_appel non épuisée *)
+  match liste_appel with
+  | x::t -> begin
+    (Hashtbl.replace session.propositions formation x); (* proposer au mieux classé *)
+    let capacite_temp = Hashtbl.find session.formations formation in
+    (Hashtbl.replace session.commissions formation t); (* on met à jour la liste d'appel *)
+    (Hashtbl.replace session.formations formation (capacite_temp-1)); (* on met à jour la capacité *)
+
+    if (Hashtbl.length session.propositions > 0) then begin
+      (* si ensemble propositions non vide *)
+      Hashtbl.iter (fun formation_bis candidat -> begin
+        (* on itère sur les propositions*)
+      let voeux_candidat = (Hashtbl.find session.candidats candidat) in
+  
+      if (Hashtbl.mem voeux_candidat formation_bis) then begin 
+        (* si proposition est dans les voeu du candidat *)
+        let rang_proposition = Hashtbl.find voeux_candidat formation_bis in
+
+        Hashtbl.iter (fun voeu rang -> begin
+          if ((get_option rang_proposition) < (get_option rang)) then begin
+            print_string ("Comparaison entre"^voeu^" et "^formation_bis);
+            (* si rang_proposition est inferieur à rang voeu courant *)
+            let cap_bis = Hashtbl.find session.formations voeu in
+            if (List.mem candidat (Hashtbl.find_all session.propositions voeu)) then begin
+              (* si candidat a reçu une proposition pour le voeu courant *)
+              Hashtbl.replace session.formations voeu (cap_bis+1); end;
+            print_string ("Suppression de "^voeu^ "\n")
+
+            end; Hashtbl.remove voeux_candidat formation_bis; end) voeux_candidat
+        end end) session.propositions
+    end end
+  |_ -> () end done end) session.commissions;
+  ;;
 
 
 let renonce session ~nom_candidat ~nom_formation = 
+  (* Hashtbl.filter_map_inplace (fun nom v -> match v with |  -> None | _ -> Some v) session.propositions ;; *)
   ignore session;
   ignore nom_candidat;
   ignore nom_formation;
