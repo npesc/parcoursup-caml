@@ -10,13 +10,6 @@ let rec aux liste arr n = function
     aux (liste @ [(get_h n (arr.(i)), i )]) arr n (i+1)
   | _ -> liste;;
 
-(* let supp arr = 
-  let n = Array.length arr in
-  let t = Array.make (n-1) 0 in
-
-  for i = 0 to (n-2) do 
-    t.(i) <- arr.(i+1)
-  done; t *)
   
   let print_conf conf = function
   | true -> print_configuration conf
