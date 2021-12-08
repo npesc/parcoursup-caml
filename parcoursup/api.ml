@@ -33,7 +33,7 @@ let nouvelle_session () = {
   etat=Config;
   candidats=Hashtbl.create 1000 ~random:false;
   formations=Hashtbl.create 100 ~random:false;
-  commissions=Hashtbl.create 10 ~random:false;
+  commissions=Hashtbl.create 100 ~random:false;
   propositions=Hashtbl.create 100 ~random:false;
   algo_locaux=Hashtbl.create 100 ~random:false;
   }
@@ -78,8 +78,8 @@ let reunit_commissions session =
   Hashtbl.iter (fun nom_c voeux -> (* voeux -> hashtable de voeux du candidat *)
     Hashtbl.iter (fun voeu _ -> 
       let commission = ref [] in
-        begin match (Hashtbl.find_opt session.commissions voeu) with
-        | None -> () | Some l -> commission := l; end; 
+      begin match (Hashtbl.find_opt session.commissions voeu) with
+        | None -> () | Some l -> commission := l end;
       if not(List.mem nom_c !commission) 
       then Hashtbl.replace session.commissions voeu (nom_c :: !commission)) voeux) table_candidats;
   Hashtbl.iter (fun formation com -> 
@@ -91,26 +91,26 @@ let nouveau_jour session =
   let rec propose f = function
     | [] -> (); (* liste d'appel vide -> rien proposer *)
     | x :: t ->
-        if (not(List.mem x (Hashtbl.find session.propositions f)) && (Hashtbl.find session.formations f > 0)) then begin
-          let prop_list = Hashtbl.find session.propositions f in
-          Hashtbl.replace session.propositions f (x::prop_list); (* proposer au mieux classé *)
-          Hashtbl.replace session.commissions f t; (* on met à jour la liste d'appel *)
-          if (Hashtbl.find_opt (Hashtbl.find session.candidats x) f <> None) then begin
-          let capacite_temp = Hashtbl.find session.formations f in
-          Hashtbl.replace session.formations f (capacite_temp-1); end (* on met à jour la capacité *)  
-        end; propose f t;in
+      if (not(List.mem x (Hashtbl.find session.propositions f)) && (Hashtbl.find session.formations f > 0)) then begin
+        let prop_list = Hashtbl.find session.propositions f in
+        Hashtbl.replace session.propositions f (x::prop_list); (* proposer au mieux classé *)
+        Hashtbl.replace session.commissions f t; (* on met à jour la liste d'appel *)
+        let capacite_temp = Hashtbl.find session.formations f in
+        Hashtbl.replace session.formations f (capacite_temp-1); (* on met à jour la capacité *)  
+      end; propose f t;in
   Hashtbl.iter (fun formation liste_appel ->
       propose formation liste_appel; 
       if (Hashtbl.length session.propositions > 0) then begin (* si ensemble propositions non vide *)
-        Hashtbl.iter (fun proposition liste_candidats -> (* on itère sur les propositions*)
+        Hashtbl.iter (fun proposition liste_candidats -> (* on itère sur les propositions *)
             List.iter (fun candidat -> 
                 let voeux_candidat = (Hashtbl.find session.candidats candidat) in 
                 let rang_proposition = Hashtbl.find voeux_candidat proposition in
-                renonce_rang rang_proposition voeux_candidat candidat session) liste_candidats) (* renonce aux voeux de rang inférieur *)
+                renonce_rang rang_proposition voeux_candidat candidat session) liste_candidats)
+                (* renonce aux voeux de rang inférieur *)
           session.propositions end) session.commissions;
-  Hashtbl.iter (fun f liste_appel -> 
-    if (Hashtbl.find session.formations f > 0) then propose f liste_appel;
-    ) session.commissions;;
+  (* itération finale pour reproposer dans le cas où des propositions ont été refusées automatiquement *)
+  Hashtbl.iter (fun f liste_appel -> if (Hashtbl.find session.formations f > 0) then propose f liste_appel;) 
+  session.commissions;; 
 
 let renonce session ~nom_candidat ~nom_formation = 
   let prop_temp = Hashtbl.find session.propositions nom_formation in 
@@ -118,7 +118,7 @@ let renonce session ~nom_candidat ~nom_formation =
     let capacite_temp = Hashtbl.find session.formations nom_formation in
     Hashtbl.replace session.propositions nom_formation (remove nom_candidat prop_temp);
     Hashtbl.replace session.formations nom_formation (capacite_temp+1) end;
-  Hashtbl.remove (Hashtbl.find session.candidats nom_candidat) nom_formation;(* suppression du voeu dans la tablevoeux du candidat *) 
+  Hashtbl.remove (Hashtbl.find session.candidats nom_candidat) nom_formation; (* suppression du voeu dans la tablevoeux du candidat *) 
   let liste_appel = Hashtbl.find session.commissions nom_formation in
   Hashtbl.replace session.commissions nom_formation (remove nom_candidat liste_appel);;
 
