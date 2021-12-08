@@ -6,9 +6,6 @@
 (* open Hashtbl *)
 type etat = | Config | Appel
 
-let get_option = function
-| Some x -> x
-| None -> raise (Invalid_argument "Option.get");;
 let rec ind x lst c = match lst with
   | [] -> raise(Failure "Not Found")
   | hd::tl -> if (hd=x) then c else ind x tl (c+1);;
@@ -28,6 +25,9 @@ type session = {
   (* formation, fonction_comparaison *)
   algo_locaux: (string, (string -> string -> int)) Hashtbl.t;
 }
+let get_option session = function
+| Some x -> x
+| None -> ((Hashtbl.length session.formations)+1);;
 
 let nouvelle_session () = {
   etat=Config;
@@ -49,11 +49,7 @@ let ajoute_formation session ~nom_formation ~capacite =
   
 
 let ajoute_voeu session ~rang_repondeur ~nom_candidat ~nom_formation = 
-  let rang = ref ((Hashtbl.length session.formations)+1) in
-  begin match rang_repondeur with 
-    | Some n -> rang := n;
-    | _ -> () end;
-  Hashtbl.replace (Hashtbl.find session.candidats nom_candidat) nom_formation (Some !rang)
+  Hashtbl.replace (Hashtbl.find session.candidats nom_candidat) nom_formation rang_repondeur;;
 
 let ajoute_commission session ~nom_formation ~fonction_comparaison = 
   let aux candidat1 candidat2 = match fonction_comparaison ~candidat1 ~candidat2 with | true -> 1 | _ -> -1 in
@@ -61,7 +57,7 @@ let ajoute_commission session ~nom_formation ~fonction_comparaison =
 
 let renonce_rang rang_prop table_voeux candidat session =
   Hashtbl.iter (fun voeu rang ->
-      if ((get_option rang_prop) < (get_option rang)) then begin
+      if (get_option session (rang_prop) < (get_option session (rang))) then begin
       (* si rang_proposition est inferieur à rang voeu courant *)
         let cap_bis = Hashtbl.find session.formations voeu in
         if ((List.mem candidat (Hashtbl.find session.propositions voeu) && (rang <> None))) then begin
@@ -98,9 +94,10 @@ let nouveau_jour session =
         if (not(List.mem x (Hashtbl.find session.propositions f)) && (Hashtbl.find session.formations f > 0)) then begin
           let prop_list = Hashtbl.find session.propositions f in
           Hashtbl.replace session.propositions f (x::prop_list); (* proposer au mieux classé *)
-          Hashtbl.replace session.commissions f t; (* on met à jour la liste d'appel *) 
+          Hashtbl.replace session.commissions f t; (* on met à jour la liste d'appel *)
+          if (Hashtbl.find_opt (Hashtbl.find session.candidats x) f <> None) then begin
           let capacite_temp = Hashtbl.find session.formations f in
-          Hashtbl.replace session.formations f (capacite_temp-1); (* on met à jour la capacité *)  
+          Hashtbl.replace session.formations f (capacite_temp-1); end (* on met à jour la capacité *)  
         end; propose f t;in
   Hashtbl.iter (fun formation liste_appel ->
       propose formation liste_appel; 
@@ -110,7 +107,10 @@ let nouveau_jour session =
                 let voeux_candidat = (Hashtbl.find session.candidats candidat) in 
                 let rang_proposition = Hashtbl.find voeux_candidat proposition in
                 renonce_rang rang_proposition voeux_candidat candidat session) liste_candidats) (* renonce aux voeux de rang inférieur *)
-          session.propositions end) session.commissions;;
+          session.propositions end) session.commissions;
+  Hashtbl.iter (fun f liste_appel -> 
+    if (Hashtbl.find session.formations f > 0) then propose f liste_appel;
+    ) session.commissions;;
 
 let renonce session ~nom_candidat ~nom_formation = 
   let prop_temp = Hashtbl.find session.propositions nom_formation in 

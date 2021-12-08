@@ -91,7 +91,7 @@ module Algo(P:PIOCHE) = struct
     let _X = ref 0 in
     let _x = ref 0 in
     let conf = {rang_appel_de=Array.make n 0 ; fiance_de=Array.make n (None)} in
-    let g_p = [|n;n|] in
+    let g_p = [|n;n|] in (* tableau pour gagnant,perdant *)
     (* initialisation *)
     _X := get_h n (P.pioche pioche); 
     (* Si l'homme pioché est None (<=> pioche est vide) get_h retourne n *)
