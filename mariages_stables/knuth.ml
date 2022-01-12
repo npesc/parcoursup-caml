@@ -15,17 +15,15 @@ let rec aux liste arr n = function
 let algo ?(affiche_config=false) entree =
   if (not(entree_valide entree)) then invalid_arg "entrée invalide" else
   begin
-  let n = entree.n in
-
-  let indesirable = n in
+  let n, indesirable  = entree.n, entree.n in
   (* l'indésirable est imaginaire, on ne doit pas l'atteindre *)
   let k = ref 0 in
   let _X = ref 0 in
   let _x = ref 0 in
- let conf = 
+  let conf = 
     {rang_appel_de=Array.make n 0 ;
-     fiance_de=Array.make n (None)}
-  in (* fiancer toutes les femmes à Ω; *)
+      fiance_de=Array.make n (None)} in
+  (* fiancer toutes les femmes à Ω; *)
 
   while (!k < n) 
   do begin
@@ -54,8 +52,7 @@ let algo ?(affiche_config=false) entree =
           conf.rang_appel_de.(!_X) <- conf.rang_appel_de.(!_X) + 1;
           print_conf conf affiche_config; end
       
-    end;
-    done;
+    end;done;
     k := !k+1;
   end done;
  let res:sortie = aux [] conf.fiance_de n 0 in

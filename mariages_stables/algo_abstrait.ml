@@ -7,15 +7,10 @@ module type PIOCHE = sig
     val defausse : 'a -> 'a t -> unit 
 end
 
-
-
 module Pile : PIOCHE = struct
-  
   type 'a t = {mutable pile: 'a list}
-
   let of_list (l:'a list) = 
     {pile = l};;
-
   let pioche p =
     match p.pile with
     | [] -> None;
@@ -23,16 +18,12 @@ module Pile : PIOCHE = struct
 
   let defausse x p =
     p.pile <- x::p.pile;;
-
 end
-
-
 
 module File : PIOCHE = struct
 
   type 'a cell = {elt : 'a ; mutable next:'a cell}
   type 'a t = 'a cell option ref
-
 
   let pioche p = match !p with
   | None -> None;
@@ -53,7 +44,6 @@ module File : PIOCHE = struct
         let cell = {elt=x; next=last.next} 
         in last.next <- cell;
           p := Some cell;;
-
   let of_list l = 
     let q = ref None in
     let rec aux q list = match list with 
@@ -65,9 +55,7 @@ module File : PIOCHE = struct
         end; 
       in
     aux q l;;
-
 end
-
 
 let rec init_celib n i = match n,i with
 | n,i when n = i -> []

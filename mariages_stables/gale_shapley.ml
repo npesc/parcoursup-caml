@@ -62,7 +62,7 @@ let algo ?(affiche_config=false) entree =
               conf.fiance_de.(!_x) <-  Some !_X;celib := h :: (remove !_X !celib);
               conf.rang_appel_de.(h) <- conf.rang_appel_de.(h) + 1;
             end;
-          | _ ->(); 
+          | _ ->();
         end;
           incremente (get_h n conf.fiance_de.(!_x)) pretendants.(!_x);
           pretendants.(!_x) <- [];
@@ -70,11 +70,3 @@ let algo ?(affiche_config=false) entree =
       print_conf conf affiche_config;done;
   let res:sortie = aux [] conf.fiance_de n 0 in
   res;
-          
-
-          
-
-
-
-
-  

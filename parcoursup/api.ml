@@ -3,7 +3,6 @@
 ├─┘├─┤├┬┘│  │ ││ │├┬┘└─┐│ │├─┘
 ┴  ┴ ┴┴└─└─┘└─┘└─┘┴└─└─┘└─┘┴   
  *)
-(* open Hashtbl *)
 type etat = | Config | Appel
 
 let rec ind x lst c = match lst with
@@ -60,7 +59,7 @@ let renonce_rang rang_prop table_voeux candidat session =
       if (get_option session (rang_prop) < (get_option session (rang))) then begin
       (* si rang_proposition est inferieur à rang voeu courant *)
         let cap_bis = Hashtbl.find session.formations voeu in
-        if ((List.mem candidat (Hashtbl.find session.propositions voeu) && (rang <> None))) then begin
+        if ((List.mem candidat (Hashtbl.find session.propositions voeu))) then begin
         (* si candidat a reçu une proposition pour le voeu courant et qu'il a activé son répondeur *)
           Hashtbl.replace session.formations voeu (cap_bis+1);
         end;
