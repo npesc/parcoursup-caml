@@ -3,8 +3,8 @@ Projet de programmation fonctionnelle en OCaml.
 
 ### Algorithmes  mariages stables
 - Knuth - [knuth.ml](https://github.com/npesc/parcoursup-caml/blob/master/mariages_stables/knuth.ml) / [doc](https://www-cs-faculty.stanford.edu/~knuth/mariages-stables.pdf)
-- Gale Shapley - [gale_shapley.ml](https://github.com/npesc/parcoursup-caml/blob/master/mariages_stables/gale_shapley.ml) /  [doc](https://www.i3s.unice.fr/~elozes/enseignement/PF/sujet-projet-pf-2021.html#algorithme-de-gale-shapley)
-- Abstrait - [algo_abstrait.ml](https://github.com/npesc/parcoursup-caml/blob/master/mariages_stables/algo_abstrait.ml) / [doc](https://www.i3s.unice.fr/~elozes/enseignement/PF/sujet-projet-pf-2021.html#algorithme-abstrait) 
+- Gale Shapley - [gale_shapley.ml](https://github.com/npesc/parcoursup-caml/blob/master/mariages_stables/gale_shapley.ml) /  [doc](https://www.i3s.unice.fr/~elozes/enseignement/Archives/2021_2022/PF/sujet-projet-pf-2021.html#algorithme-de-gale-shapley)
+- Abstrait - [algo_abstrait.ml](https://github.com/npesc/parcoursup-caml/blob/master/mariages_stables/algo_abstrait.ml) / [doc](https://www.i3s.unice.fr/~elozes/enseignement/Archives/2021_2022/PF/sujet-projet-pf-2021.html#algorithme-abstrait) 
 
 **Format d'entrée** 
 ```ocaml
